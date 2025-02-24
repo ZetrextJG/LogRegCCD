@@ -1,0 +1,6 @@
+defaults:
+  - _self_
+  - dataset: iris
+
+exp:
+  seed: 42
