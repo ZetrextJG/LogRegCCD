@@ -6,11 +6,11 @@ from dataset.base import BaseDataset
 
 
 class IrisDataset(BaseDataset):
-    def __init__(self, split: str = "train") -> None:
-        super().__init__(split)
+    def __init__(self, num_classes: int, split: str = "train") -> None:
+        super().__init__(num_classes, split)
 
         iris = datasets.load_iris()
-        X_full, y_full = iris["data"], iris["target"]
+        X_full, y_full = iris["data"], iris["target"]  # type: ignore
         assert X_full.shape[0] == y_full.shape[0]
 
         indicies = np.arange(X_full.shape[0])

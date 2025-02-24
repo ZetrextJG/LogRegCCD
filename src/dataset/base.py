@@ -3,8 +3,9 @@ import numpy as np
 
 
 class BaseDataset(ABC):
-    def __init__(self, split: str = "train") -> None:
+    def __init__(self, num_classes: int, split: str = "train") -> None:
         super().__init__()
+        self.num_classes = num_classes
         assert split in ["train", "val", "test"]
         self.split = split
 

@@ -1,0 +1,7 @@
+_target_: dataset.CSVDataset
+_partial_: true
+
+num_classes: ???
+train_path: ???
+test_path: ???
+val_path: ???

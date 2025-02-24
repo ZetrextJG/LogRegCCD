@@ -1,3 +1,5 @@
 _target_: dataset.IrisDataset
 _partial_: true
 
+num_classes: 3
+

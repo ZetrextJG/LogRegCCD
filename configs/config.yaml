@@ -4,3 +4,4 @@ defaults:
 
 exp:
   seed: 42
+  output_path: results
