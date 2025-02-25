@@ -1,6 +1,6 @@
 # AdvML
 This project contains the code for the Advanced Machine Learning course.
-Specifically the first project regarding the LogRegCCD algorithm.
+Specifically the first project regarding the LogRegCCD algorithm for binary classification.
 
 ## Codebase
 This repository uses [Hydra](https://hydra.cc/) as the main driving force for configuration management.
