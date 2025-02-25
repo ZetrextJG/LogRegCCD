@@ -13,6 +13,8 @@ class IrisDataset(BaseDataset):
         X_full, y_full = iris["data"], iris["target"]  # type: ignore
         assert X_full.shape[0] == y_full.shape[0]
 
+        y_full[y_full == 2] = 1  # Binarize the dataset
+
         indicies = np.arange(X_full.shape[0])
         np.random.shuffle(indicies)
         train_idx, val_idx, test_idx = split_vector(indicies, [0.8, 0.1, 0.1])
