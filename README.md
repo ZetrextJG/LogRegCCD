@@ -12,7 +12,10 @@ We prepared a few example scripts located in the `scripts` directory.
 
 ### How to run the scripts?
 1. Install the conda environment using the provided `environment.yml` file.
-2. Activate the conda environment (advml).
+```bash
+conda env create -f environment.yml
+```
+2. Activate the conda environment (advml) `conda activate advml`.
 3. Run the scripts from the root of the project. Ex:
 ```bash
 ./scripts/run_iris.sh
