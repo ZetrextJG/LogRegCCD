@@ -22,4 +22,4 @@ conda env create -f environment.yml
 ```
 
 ## License
-The code is license under the MIT License.
+The code is licensed under the MIT License.
