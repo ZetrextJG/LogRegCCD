@@ -41,7 +41,7 @@ class LogRegCCD:
         self.num_lmbdas = num_lmbdas
         self.epsilon = epsilon
         self.max_cycles = max_cycles
-        self.warn_start = warm_start
+        self.warm_start = warm_start
 
         self.fitted = False
         self.beta0 = None  # type: ignore
@@ -69,9 +69,14 @@ class LogRegCCD:
         x2 = x**2
 
         # Initialize the betas
-        betas = np.zeros(x.shape[1])
-        # beta0 = -np.log((1 / np.mean(y) - 1))  # type: ignore
-        beta0 = 0
+        if self.warm_start and (self.beta0 is not None) and (self.betas is not None):
+            betas = self.betas.copy()
+            beta0 = self.beta0
+        else:
+            betas = np.zeros(x.shape[1])
+            beta0 = 0
+            # This should be more better but I will set it as an option
+            # beta0 = -np.log((1 / np.mean(y) - 1))  # type: ignore
 
         # CCD loop
         for _ in range(self.max_cycles):
