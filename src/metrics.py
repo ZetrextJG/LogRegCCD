@@ -14,7 +14,9 @@ class Metrics(TypedDict):
 def calculate_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Metrics:
     return {
         "accuracy": skm.accuracy_score(y_true, y_pred),  # type: ignore
-        "precision": skm.precision_score(y_true, y_pred, average="binary"),  # type: ignore
-        "recall": skm.recall_score(y_true, y_pred, average="binary"),  # type: ignore
+        "precision": skm.precision_score(
+            y_true, y_pred, average="binary", zero_division=0.0
+        ),  # type: ignore
+        "recall": skm.recall_score(y_true, y_pred, average="binary", zero_division=0.0),  # type: ignore
         "f1": skm.f1_score(y_true, y_pred, average="binary"),  # type: ignore
     }
