@@ -1,4 +1,4 @@
-name: advml
+name: advml2
 channels:
 - defaults
 - https://repo.anaconda.com/pkgs/main
