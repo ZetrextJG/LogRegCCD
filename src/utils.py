@@ -8,7 +8,7 @@ def seed_everything(seed: int) -> None:
 
 
 def split_vector(x, splits=[0.8, 0.1, 0.1]):
-    assert np.sum(splits) == 1.0
+    assert np.isclose(np.sum(splits), 1.0)
     N = len(x)
     split_points = np.cumsum([0] + splits)
     split_points = (N * split_points).astype(int)

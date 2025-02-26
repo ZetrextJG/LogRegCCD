@@ -20,7 +20,11 @@ def main(config: DictConfig):
     test_dataset: BaseDataset = dataset(split="test")
     val_dataset: BaseDataset = dataset(split="val")
 
-    ccd_model = LogRegCCD(alpha=1)  # lasso
+    ccd_model = LogRegCCD(
+        alpha=1,  # lasso
+        heuristic_intercept=False,
+        fit_intercept=False,
+    )
     results = ccd_model.fit(
         train_dataset.get_X(),
         train_dataset.get_y(),
@@ -30,13 +34,19 @@ def main(config: DictConfig):
     scores = [result["score"] for result in results]
     betas = [result["betas"] for result in results]
     betas = np.stack(betas)
+    print(scores)
+    print(betas)
     print(ccd_model.lmbda)
     print(ccd_model.beta0)
     print(ccd_model.betas)
 
     lmbda = ccd_model.lmbda
     lr_model = LogisticRegression(
-        C=1 / lmbda, penalty="l1", solver="liblinear", max_iter=1000
+        C=1 / lmbda,
+        penalty="l1",
+        solver="liblinear",
+        max_iter=1000,
+        fit_intercept=False,
     )
     lr_model.fit(train_dataset.get_X(), train_dataset.get_y())
 

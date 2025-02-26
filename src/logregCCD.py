@@ -11,10 +11,9 @@ def soft_thresholding(x: np.ndarray, gamma: float):
     return np.sign(x) * np.maximum(inner, 0)
 
 
-def sigmoid(x: np.ndarray, upper_bound: float = 1e2):
+def sigmoid(x: np.ndarray, float_upper_bound: float = 600.0):
     # Prevents overflow
-    x[x > upper_bound] = upper_bound
-    x[x < -upper_bound] = -upper_bound
+    x = np.clip(x, a_min=-float_upper_bound, a_max=float_upper_bound)
     return 1 / (1 + np.exp(-x))
 
 
@@ -34,13 +33,21 @@ class LogRegCCD:
         self,
         alpha: float,
         num_lmbdas: int = 100,
-        epsilon: float = 1e-3,
+        min_lmbda_eps: float = 1e-4,
         max_cycles: int = 100,
+        warm_start: bool = True,
+        px_clipping_eps: float = 1e-5,
+        heuristic_intercept: bool = False,
+        fit_intercept: bool = False,
     ) -> None:
         self.alpha = alpha
         self.num_lmbdas = num_lmbdas
-        self.epsilon = epsilon
+        self.min_lmbda_eps = min_lmbda_eps
         self.max_cycles = max_cycles
+        self.warm_start = warm_start
+        self.px_clipping_eps = px_clipping_eps
+        self.heuristic_intercept = heuristic_intercept
+        self.fit_intercept = fit_intercept
 
         self.fitted = False
         self.beta0 = None  # type: ignore
@@ -61,17 +68,19 @@ class LogRegCCD:
         z_pred = beta0 + (x @ betas)
         return sigmoid(z_pred)
 
-    def _fit(
-        self, x: np.ndarray, y: np.ndarray, lmbda: float, eps_clipping: float = 1e-5
-    ):
+    def _fit(self, x: np.ndarray, y: np.ndarray, lmbda: float):
         # Precomputed for efficiency
-        N = x.shape[0]
         x2 = x**2
 
         # Initialize the betas
-        betas = np.random.randn(x.shape[1])
-        # beta0 = -np.log((1 / np.mean(y) - 1))  # type: ignore
-        beta0 = 0
+        if self.warm_start and (self.beta0 is not None) and (self.betas is not None):
+            betas = self.betas.copy()
+            beta0 = self.beta0
+        else:
+            betas = np.zeros(x.shape[1])
+            beta0 = 0
+            if self.heuristic_intercept:
+                beta0 = -np.log((1 / np.mean(y) - 1))  # type: ignore
 
         # CCD loop
         for _ in range(self.max_cycles):
@@ -81,31 +90,32 @@ class LogRegCCD:
             z_pred = beta0 + (x @ betas)  # linear predictor
             px_pred = sigmoid(z_pred)  # probability of the positive class
             ## Prediction clipping
-            px_pred[px_pred < eps_clipping] = eps_clipping
-            px_pred[px_pred > 1 - eps_clipping] = 1 - eps_clipping
+            px_pred = np.clip(
+                px_pred, a_min=self.px_clipping_eps, a_max=1 - self.px_clipping_eps
+            )
             weights = px_pred * (1 - px_pred)  # weights (Equation 17)
             z = z_pred + (y - px_pred) / weights  # working response (Equation 16)
 
+            if self.fit_intercept:
+                beta0 = np.mean(z)
+
             # Run the coordinate descent
             for j in range(x.shape[1]):
-                if betas[j] == 0:
-                    continue
-
                 z_pred = beta0 + (x @ betas)
                 z_residuals = z - z_pred
 
                 # Compute the update for beta_j
                 ## Using Equation 8 adapted for weighted case
-                s_input = np.mean(
+                s_input = np.sum(
                     weights * (x[:, j] * z_residuals + x2[:, j] * betas[j])
                 )
-                weighted_var = np.mean(weights * x2[:, j])
+                weighted_var = np.sum(weights * x2[:, j])
                 ## Update beta_j using Equation 10
                 numerator = soft_thresholding(s_input, lmbda * self.alpha)
                 demoniator = weighted_var + lmbda * (1 - self.alpha)
                 betas[j] = numerator / demoniator
 
-            if np.linalg.norm(betas - old_betas) < (1e-3 / N):
+            if np.linalg.norm(betas - old_betas, ord=1) < 1e-4:
                 break
 
         return beta0, betas
@@ -131,10 +141,11 @@ class LogRegCCD:
         # Parameter reassignment to follow the notation in the paper
         x = train_X
         y = train_y
-
         N = x.shape[0]
+
+        # Compute the lambda sequence
         lmbda_max = np.max(np.abs(x.T @ y)) / (N * self.alpha)
-        lmbda_min = self.epsilon * lmbda_max
+        lmbda_min = self.min_lmbda_eps * lmbda_max
         lmbdas = np.logspace(np.log10(lmbda_max), np.log10(lmbda_min), self.num_lmbdas)
 
         # Fit the model for each lambda
