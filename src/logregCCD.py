@@ -35,11 +35,13 @@ class LogRegCCD:
         num_lmbdas: int = 100,
         epsilon: float = 1e-3,
         max_cycles: int = 100,
+        warm_start: bool = False,
     ) -> None:
         self.alpha = alpha
         self.num_lmbdas = num_lmbdas
         self.epsilon = epsilon
         self.max_cycles = max_cycles
+        self.warn_start = warm_start
 
         self.fitted = False
         self.beta0 = None  # type: ignore
@@ -64,7 +66,6 @@ class LogRegCCD:
         self, x: np.ndarray, y: np.ndarray, lmbda: float, eps_clipping: float = 1e-5
     ):
         # Precomputed for efficiency
-        N = x.shape[0]
         x2 = x**2
 
         # Initialize the betas
@@ -100,7 +101,7 @@ class LogRegCCD:
                 demoniator = weighted_var + lmbda * (1 - self.alpha)
                 betas[j] = numerator / demoniator
 
-            if np.linalg.norm(betas - old_betas) < (1e-3 / N):
+            if np.linalg.norm(betas - old_betas, ord=1) < 1e-3:
                 break
 
         return beta0, betas
