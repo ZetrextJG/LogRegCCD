@@ -33,7 +33,7 @@ class LogRegCCD:
         self,
         alpha: float,
         num_lmbdas: int = 100,
-        epsilon: float = 1e-3,
+        epsilon: float = 1e-4,
         max_cycles: int = 100,
         warm_start: bool = False,
     ) -> None:
@@ -97,16 +97,16 @@ class LogRegCCD:
 
                 # Compute the update for beta_j
                 ## Using Equation 8 adapted for weighted case
-                s_input = np.mean(
+                s_input = np.sum(
                     weights * (x[:, j] * z_residuals + x2[:, j] * betas[j])
                 )
-                weighted_var = np.mean(weights * x2[:, j])
+                weighted_var = np.sum(weights * x2[:, j])
                 ## Update beta_j using Equation 10
                 numerator = soft_thresholding(s_input, lmbda * self.alpha)
                 demoniator = weighted_var + lmbda * (1 - self.alpha)
                 betas[j] = numerator / demoniator
 
-            if np.linalg.norm(betas - old_betas, ord=1) < 1e-3:
+            if np.linalg.norm(betas - old_betas, ord=1) < 1e-4:
                 break
 
         return beta0, betas
