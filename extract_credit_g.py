@@ -65,4 +65,6 @@ df,cols = remove_highly_correlated(df)
 print_unique(df)
 
 df = select_high_variability(df)
+
+df['class'] = df.pop('class')
 df.to_csv("credit_g_rdy.csv", index=False)
