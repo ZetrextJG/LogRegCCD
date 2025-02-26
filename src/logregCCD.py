@@ -33,15 +33,21 @@ class LogRegCCD:
         self,
         alpha: float,
         num_lmbdas: int = 100,
-        epsilon: float = 1e-4,
+        min_lmbda_eps: float = 1e-4,
         max_cycles: int = 100,
-        warm_start: bool = False,
+        warm_start: bool = True,
+        px_clipping_eps: float = 1e-5,
+        heuristic_intercept: bool = False,
+        fit_intercept: bool = False,
     ) -> None:
         self.alpha = alpha
         self.num_lmbdas = num_lmbdas
-        self.epsilon = epsilon
+        self.min_lmbda_eps = min_lmbda_eps
         self.max_cycles = max_cycles
         self.warm_start = warm_start
+        self.px_clipping_eps = px_clipping_eps
+        self.heuristic_intercept = heuristic_intercept
+        self.fit_intercept = fit_intercept
 
         self.fitted = False
         self.beta0 = None  # type: ignore
@@ -62,9 +68,7 @@ class LogRegCCD:
         z_pred = beta0 + (x @ betas)
         return sigmoid(z_pred)
 
-    def _fit(
-        self, x: np.ndarray, y: np.ndarray, lmbda: float, eps_clipping: float = 1e-5
-    ):
+    def _fit(self, x: np.ndarray, y: np.ndarray, lmbda: float):
         # Precomputed for efficiency
         x2 = x**2
 
@@ -75,8 +79,8 @@ class LogRegCCD:
         else:
             betas = np.zeros(x.shape[1])
             beta0 = 0
-            # This should be more better but I will set it as an option
-            # beta0 = -np.log((1 / np.mean(y) - 1))  # type: ignore
+            if self.heuristic_intercept:
+                beta0 = -np.log((1 / np.mean(y) - 1))  # type: ignore
 
         # CCD loop
         for _ in range(self.max_cycles):
@@ -86,9 +90,14 @@ class LogRegCCD:
             z_pred = beta0 + (x @ betas)  # linear predictor
             px_pred = sigmoid(z_pred)  # probability of the positive class
             ## Prediction clipping
-            px_pred = np.clip(px_pred, a_min=eps_clipping, a_max=1 - eps_clipping)
+            px_pred = np.clip(
+                px_pred, a_min=self.px_clipping_eps, a_max=1 - self.px_clipping_eps
+            )
             weights = px_pred * (1 - px_pred)  # weights (Equation 17)
             z = z_pred + (y - px_pred) / weights  # working response (Equation 16)
+
+            if self.fit_intercept:
+                beta0 = np.mean(z)
 
             # Run the coordinate descent
             for j in range(x.shape[1]):
@@ -132,10 +141,11 @@ class LogRegCCD:
         # Parameter reassignment to follow the notation in the paper
         x = train_X
         y = train_y
-
         N = x.shape[0]
+
+        # Compute the lambda sequence
         lmbda_max = np.max(np.abs(x.T @ y)) / (N * self.alpha)
-        lmbda_min = self.epsilon * lmbda_max
+        lmbda_min = self.min_lmbda_eps * lmbda_max
         lmbdas = np.logspace(np.log10(lmbda_max), np.log10(lmbda_min), self.num_lmbdas)
 
         # Fit the model for each lambda

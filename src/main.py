@@ -20,7 +20,11 @@ def main(config: DictConfig):
     test_dataset: BaseDataset = dataset(split="test")
     val_dataset: BaseDataset = dataset(split="val")
 
-    ccd_model = LogRegCCD(alpha=1)  # lasso
+    ccd_model = LogRegCCD(
+        alpha=1,  # lasso
+        heuristic_intercept=False,
+        fit_intercept=False,
+    )
     results = ccd_model.fit(
         train_dataset.get_X(),
         train_dataset.get_y(),
