@@ -30,6 +30,7 @@ def main(config: DictConfig):
     scores = [result["score"] for result in results]
     betas = [result["betas"] for result in results]
     betas = np.stack(betas)
+    print(scores)
     print(ccd_model.lmbda)
     print(ccd_model.beta0)
     print(ccd_model.betas)

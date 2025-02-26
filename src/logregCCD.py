@@ -11,10 +11,9 @@ def soft_thresholding(x: np.ndarray, gamma: float):
     return np.sign(x) * np.maximum(inner, 0)
 
 
-def sigmoid(x: np.ndarray, upper_bound: float = 1e2):
+def sigmoid(x: np.ndarray, float_upper_bound: float = 600.0):
     # Prevents overflow
-    x[x > upper_bound] = upper_bound
-    x[x < -upper_bound] = -upper_bound
+    x = np.clip(x, a_min=-float_upper_bound, a_max=float_upper_bound)
     return 1 / (1 + np.exp(-x))
 
 
@@ -69,7 +68,7 @@ class LogRegCCD:
         x2 = x**2
 
         # Initialize the betas
-        betas = np.random.randn(x.shape[1])
+        betas = np.zeros(x.shape[1])
         # beta0 = -np.log((1 / np.mean(y) - 1))  # type: ignore
         beta0 = 0
 
@@ -81,16 +80,12 @@ class LogRegCCD:
             z_pred = beta0 + (x @ betas)  # linear predictor
             px_pred = sigmoid(z_pred)  # probability of the positive class
             ## Prediction clipping
-            px_pred[px_pred < eps_clipping] = eps_clipping
-            px_pred[px_pred > 1 - eps_clipping] = 1 - eps_clipping
+            px_pred = np.clip(px_pred, a_min=eps_clipping, a_max=1 - eps_clipping)
             weights = px_pred * (1 - px_pred)  # weights (Equation 17)
             z = z_pred + (y - px_pred) / weights  # working response (Equation 16)
 
             # Run the coordinate descent
             for j in range(x.shape[1]):
-                if betas[j] == 0:
-                    continue
-
                 z_pred = beta0 + (x @ betas)
                 z_residuals = z - z_pred
 
