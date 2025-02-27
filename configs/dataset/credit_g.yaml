@@ -1,0 +1,8 @@
+_target_: dataset.CreditDataset
+_partial_: true
+
+num_classes: 2
+train_path: "data/credit/credit_train.csv"
+test_path: "data/credit/credit_test.csv"
+val_path: "data/credit/credit_val.csv"
+split: "train"

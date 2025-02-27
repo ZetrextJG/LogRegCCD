@@ -3,6 +3,8 @@ from statistics import correlation
 import arff
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
+
 pd.set_option("display.max_rows", None)
 pd.set_option("display.max_columns", None)
 pd.set_option("display.width", 1000)
@@ -36,6 +38,7 @@ def remove_highly_correlated(df, threshold=0.65):
     upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
     to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
     df_reduced = df.drop(columns=to_drop)
+
     return df_reduced, to_drop
 
 def print_unique(df):
@@ -56,7 +59,6 @@ with open("dataset_31_credit-g.arff", "r") as f:
 df = pd.DataFrame(data["data"], columns=[attr[0] for attr in data["attributes"]])
 
 
-
 df = code_target(df)
 df = code_categorical(df)
 df = code_numerical(df)
@@ -67,4 +69,12 @@ print_unique(df)
 df = select_high_variability(df)
 
 df['class'] = df.pop('class')
-df.to_csv("credit_g_rdy.csv", index=False)
+df.to_csv("credit.csv", index=False)
+
+train_df, temp_df = train_test_split(df, test_size=0.4, random_state=42)
+val_df, test_df = train_test_split(temp_df, test_size=0.5, random_state=42)
+
+
+train_df.to_csv('credit_train.csv', index=False)
+val_df.to_csv('credit_val.csv', index=False)
+test_df.to_csv('credit_test.csv', index=False)
