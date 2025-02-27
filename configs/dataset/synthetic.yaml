@@ -1,0 +1,8 @@
+_target_: dataset.SyntheticDataset
+_partial_: true
+
+num_classes: 2
+p: 0.4
+n: 1000
+d: 4
+g: 0.9
