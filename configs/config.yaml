@@ -1,6 +1,10 @@
 defaults:
   - _self_
-  - dataset: iris
+  - dataset:
+    - bankrupcy
+    - credit_g
+
+
 
 exp:
   seed: 42
