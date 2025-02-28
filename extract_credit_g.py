@@ -68,12 +68,22 @@ print_unique(df)
 
 df = select_high_variability(df)
 
+
+def remove_common_zero_columns(dfs):
+    zero_columns = set(col for df in dfs for col in df.columns if df[col].eq(0).all())
+    return [df.drop(columns=zero_columns, errors="ignore") for df in dfs]
+
+
 df['class'] = df.pop('class')
 df.to_csv("credit.csv", index=False)
 
 train_df, temp_df = train_test_split(df, test_size=0.4, random_state=42)
 val_df, test_df = train_test_split(temp_df, test_size=0.5, random_state=42)
+dfs = remove_common_zero_columns([train_df, val_df, test_df])
 
+train_df = dfs[0]
+val_df = dfs[1]
+test_df = dfs[2]
 
 train_df.to_csv('credit_train.csv', index=False)
 val_df.to_csv('credit_val.csv', index=False)
