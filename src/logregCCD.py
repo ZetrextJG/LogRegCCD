@@ -175,15 +175,18 @@ class LogRegCCD:
 
         return results
 
-    def predict(self, X: np.ndarray) -> np.ndarray:
+    def predict(self, X: np.ndarray, threshold: float = 0.5) -> np.ndarray:
         """Predicts on the input X"""
-        ...
+        proba = self.predict_proba(X)
+        return (proba > threshold).astype(int)
 
     def fit_predict(
         self,
         train_X: np.ndarray,
         train_y: np.ndarray,
-        test_X: np.ndarray,
+        val_X: np.ndarray,
+        val_y: np.ndarray,
     ) -> np.ndarray:
         """Fits the model on the train set and predicts on the test set"""
-        ...
+        self.fit(train_X, train_y, val_X, val_y)
+        return self.predict(train_X)

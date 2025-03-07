@@ -25,13 +25,9 @@ class IrisDataset(BaseDataset):
             "test": (X_full[test_idx], y_full[test_idx]),
         }
 
-        # Center observations
-        X_train, _ = self.data["train"]
-        self.mean = np.mean(X_train, axis=0)
-
     def get_X(self) -> np.ndarray:
         X, _ = self.data[self.split]
-        return X - self.mean
+        return X
 
     def get_y(self) -> np.ndarray:
         _, y = self.data[self.split]
@@ -39,5 +35,4 @@ class IrisDataset(BaseDataset):
 
     def get_data(self) -> np.ndarray:
         X, y = self.data[self.split]
-        X = X - self.mean
         return np.hstack((X, y.reshape(-1, 1)))

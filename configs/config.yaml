@@ -1,11 +1,11 @@
 defaults:
   - _self_
-  - dataset:
-    - bankrupcy
-    - credit_g
-
-
+  - dataset: iris
 
 exp:
   seed: 42
+
+  center: True
+  standardize: True
+
   output_path: results

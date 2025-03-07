@@ -33,13 +33,17 @@ class CSVDataset(BaseDataset):
             case _:
                 raise ValueError(f"Invalid split {self.split}")
 
-        self.data = pd.read_csv(path).to_numpy()
+        self.data = pd.read_csv(path)
+        self.np_data = self.data.to_numpy()
 
     def get_X(self) -> np.ndarray:
-        return self.data[:, :-1]
+        return self.np_data[:, :-1]
 
     def get_y(self) -> np.ndarray:
-        return self.data[:, -1]
+        return self.np_data[:, -1]
 
     def get_data(self) -> np.ndarray:
-        return self.data
+        return self.np_data
+
+    def get_colnames(self) -> list[str]:
+        return self.data.columns.tolist()
