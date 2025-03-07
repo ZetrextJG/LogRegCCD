@@ -5,6 +5,7 @@ from sklearn.preprocessing import StandardScaler
 from omegaconf import DictConfig
 from hydra.utils import instantiate
 import numpy as np
+import time
 
 from dataset import BaseDataset
 from metrics import calculate_metrics
@@ -39,17 +40,19 @@ def main(config: DictConfig):
         heuristic_intercept=False,
         fit_intercept=False,
     )
+
+    stime = time.time_ns()
     results = ccd_model.fit(X_train, y_train, X_val, y_val)
+    print(f"Time: {(time.time_ns() - stime) / 1e9} s")
     scores = [result["score"] for result in results]
     betas = [result["betas"] for result in results]
     betas = np.stack(betas)
 
     print(scores)
-
-    y_pred = ccd_model.predict(X_train)
+    y_pred = ccd_model.predict(X_test)
     if hasattr(train_dataset, "get_colnames"):
         print(train_dataset.get_colnames())
-    print(calculate_metrics(y_train, y_pred))
+    print(calculate_metrics(y_test, y_pred))
     print(ccd_model.lmbda)
     print(ccd_model.beta0)
     print(ccd_model.betas)
@@ -63,11 +66,11 @@ def main(config: DictConfig):
         fit_intercept=False,
     )
     lr_model.fit(X_train, y_train)
-    y_pred = lr_model.predict(X_train)
+    y_pred = lr_model.predict(X_test)
 
     print(lr_model.intercept_)
     print(lr_model.coef_)
-    print(calculate_metrics(y_train, y_pred))
+    print(calculate_metrics(y_test, y_pred))
 
 
 if __name__ == "__main__":
