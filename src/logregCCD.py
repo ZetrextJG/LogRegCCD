@@ -100,19 +100,19 @@ class LogRegCCD:
                 beta0 = np.mean(z)
 
             # Run the coordinate descent
+            weighted_vars = weights @ x2
             for j in range(x.shape[1]):
                 z_pred = beta0 + (x @ betas)
                 z_residuals = z - z_pred
 
                 # Compute the update for beta_j
-                ## Using Equation 8 adapted for weighted case
+                ## Using Equation 8 adapted for weighted non standardized case
                 s_input = np.sum(
                     weights * (x[:, j] * z_residuals + x2[:, j] * betas[j])
                 )
-                weighted_var = np.sum(weights * x2[:, j])
                 ## Update beta_j using Equation 10
                 numerator = soft_thresholding(s_input, lmbda * self.alpha)
-                demoniator = weighted_var + lmbda * (1 - self.alpha)
+                demoniator = weighted_vars[j] + lmbda * (1 - self.alpha)
                 betas[j] = numerator / demoniator
 
             if np.linalg.norm(betas - old_betas, ord=1) < 1e-4:
@@ -143,8 +143,9 @@ class LogRegCCD:
         y = train_y
         N = x.shape[0]
 
-        # Compute the lambda sequence
-        lmbda_max = np.max(np.abs(x.T @ y)) / (N * self.alpha)
+        # Compute the lambda sequence (Section 2.5)
+        # The scaling by 4 is due to max of weights being 1/4
+        lmbda_max = 4 * np.max(np.abs(x.T @ y)) / (N * self.alpha)
         lmbda_min = self.min_lmbda_eps * lmbda_max
         lmbdas = np.logspace(np.log10(lmbda_max), np.log10(lmbda_min), self.num_lmbdas)
 
