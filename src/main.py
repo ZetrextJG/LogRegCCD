@@ -1,47 +1,32 @@
 import hydra
 
+from plots import plot_betas, plot_metrics
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from omegaconf import DictConfig
 from hydra.utils import instantiate
-import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 import time
 
 from dataset import BaseDataset
 from metrics import calculate_metrics
-from utils import seed_everything
+from utils import seed_everything, collate_dicts
 from logregCCD import LogRegCCD
+from pathlib import Path
 
+import logging
 
-def plot_betas(betas: np.ndarray, lmbdas: np.ndarray):
-    # betas: (num_lmbdas, D)
-    # lmbdas: (num_lmbdas,)
-
-    D = betas.shape[1]  # Number of features
-
-    sns.set_style("whitegrid")  # Set Seaborn style
-    fig, ax = plt.subplots(figsize=(8, 6))
-
-    for d in range(D):
-        sns.lineplot(x=lmbdas, y=betas[:, d], label=f"Beta {d+1}", ax=ax)
-
-    ax.set_xscale("log")  # Log scale for lambda
-    ax.set_xlabel("Lambda")
-    ax.set_ylabel("Beta Coefficients")
-    ax.set_title("Regularization Path")
-    ax.legend()
-
-    return fig
+logger = logging.getLogger(__name__)
 
 
 @hydra.main(version_base=None, config_path="../configs", config_name="config")
 def main(config: DictConfig):
     # Allow reproducibility
+    logger.info("Setting seed")
     seed_everything(config.exp.seed)
 
     # Get data
+    logger.info("Creating datasets")
     dataset = instantiate(config.dataset)
     train_dataset: BaseDataset = dataset(split="train")
     test_dataset: BaseDataset = dataset(split="test")
@@ -51,6 +36,7 @@ def main(config: DictConfig):
     X_test, y_test = test_dataset.get_X(), test_dataset.get_y()
 
     # Preprocess data
+    logger.info("Preprocessing data")
     scaler = StandardScaler(
         with_mean=config.exp.center, with_std=config.exp.standardize
     )
@@ -58,26 +44,34 @@ def main(config: DictConfig):
     X_val: np.ndarray = scaler.transform(X_val)  # type: ignore
     X_test: np.ndarray = scaler.transform(X_test)  # type: ignore
 
+    # Init the model
     ccd_model = LogRegCCD(
         alpha=1,  # lasso
         heuristic_intercept=False,
         fit_intercept=False,
     )
 
+    # Fit the model
+    logger.info("Fitting the model")
     stime = time.time_ns()
     results = ccd_model.fit(X_train, y_train, X_val, y_val)
     fitting_time_s = (time.time_ns() - stime) / 1e9
+
+    # Model results
     lmbdas = np.array([result["lmbda"] for result in results])
-    scores = np.array([result["score"] for result in results])
     betas = np.stack([result["betas"] for result in results])
+    fit_metrics = collate_dicts([result["metrics"] for result in results])
 
     # Evaluate the model
+    logger.info("Evaluating model")
     train_metrics = calculate_metrics(
-        y_train, ccd_model.predict(X_train), prefix="train"
+        y_train, ccd_model.predict_proba(X_train), prefix="train"
     )
-    val_metrics = calculate_metrics(y_val, ccd_model.predict(X_val), prefix="val")
-    test_metrics = calculate_metrics(y_test, ccd_model.predict(X_test), prefix="test")
-    metrics = {
+    val_metrics = calculate_metrics(y_val, ccd_model.predict_proba(X_val), prefix="val")
+    test_metrics = calculate_metrics(
+        y_test, ccd_model.predict_proba(X_test), prefix="test"
+    )
+    eval_metrics = {
         **train_metrics,
         **val_metrics,
         **test_metrics,
@@ -85,6 +79,7 @@ def main(config: DictConfig):
     }
 
     # Fit the LogisticRegression model
+    logger.info("Fitting LR model")
     lmbda = ccd_model.lmbda
     lr_model = LogisticRegression(
         C=1 / lmbda,
@@ -94,12 +89,25 @@ def main(config: DictConfig):
         fit_intercept=False,
     )
     lr_model.fit(X_train, y_train)
-    lr_metrics = calculate_metrics(y_test, lr_model.predict(X_test), prefix="lr_test")
+    lr_metrics = calculate_metrics(
+        y_test, lr_model.predict_proba(X_test)[:, 1], prefix="lr_test"
+    )
+
+    # Save results
+    output_dir = Path(config.exp.output_path) / config.dataset.name
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     # Plotting
+    logger.info("Plotting results")
+    ## Plot betas
     fig = plot_betas(betas, lmbdas)
-    fig.show()
-    plt.show()
+    fig.savefig(output_dir / "betas.png")
+    ## Plot metrics
+    for metric in fit_metrics.keys():
+        fig = plot_metrics(fit_metrics, lmbdas, metric)
+        fig.savefig(output_dir / f"{metric}.png")
+
+    logger.info("Saving results done")
 
 
 if __name__ == "__main__":

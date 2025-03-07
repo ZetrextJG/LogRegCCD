@@ -1,7 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 
-from metrics import calculate_metrics
+from metrics import calculate_metrics, Metrics
 from typing import TypedDict
 
 
@@ -19,9 +19,9 @@ def sigmoid(x: np.ndarray, float_upper_bound: float = 600.0):
 
 class Result(TypedDict):
     lmbda: float
-    score: float
     beta0: float
     betas: np.ndarray
+    metrics: Metrics
 
 
 class LogRegCCD:
@@ -150,21 +150,22 @@ class LogRegCCD:
         lmbdas = np.logspace(np.log10(lmbda_max), np.log10(lmbda_min), self.num_lmbdas)
 
         # Fit the model for each lambda
-        results = []
+        results: list[Result] = []
         for lmbda in tqdm(lmbdas):
             beta0, betas = self._fit(x, y, lmbda)
-
             probs = self._predict_proba(val_X, beta0, betas)
-            y_pred = (probs > 0.5).astype(int)
-            scores = calculate_metrics(val_y, y_pred)
-            score = scores[metric]
-
+            metrics = calculate_metrics(val_y, probs)
             results.append(
-                {"lmbda": lmbda, "score": score, "beta0": beta0, "betas": betas}
+                {
+                    "lmbda": lmbda,
+                    "beta0": beta0,  # type: ignore
+                    "betas": betas,
+                    "metrics": metrics,
+                }
             )
 
         # Select the best lambda
-        scores = [result["score"] for result in results]
+        scores = [result["metrics"][metric] for result in results]
         scores = np.array(scores)
         idx = np.argmax(scores)
 

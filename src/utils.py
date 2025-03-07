@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from collections import defaultdict
 
 
 def seed_everything(seed: int) -> None:
@@ -15,3 +16,11 @@ def split_vector(x, splits=[0.8, 0.1, 0.1]):
     return [
         x[split_points[i] : split_points[i + 1]] for i in range(len(split_points) - 1)
     ]
+
+
+def collate_dicts(dict_list):
+    collated = defaultdict(list)
+    for d in dict_list:
+        for key, value in d.items():
+            collated[key].append(value)
+    return dict(collated)
