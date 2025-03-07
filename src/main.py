@@ -101,11 +101,11 @@ def main(config: DictConfig):
     logger.info("Plotting results")
     ## Plot betas
     fig = plot_betas(betas, lmbdas)
-    fig.savefig(output_dir / "betas.png")
+    fig.savefig(output_dir / "betas.pdf")
     ## Plot metrics
     for metric in fit_metrics.keys():
         fig = plot_metrics(fit_metrics, lmbdas, metric)
-        fig.savefig(output_dir / f"{metric}.png")
+        fig.savefig(output_dir / f"{metric}.pdf")
 
     logger.info("Saving results done")
 

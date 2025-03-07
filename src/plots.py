@@ -3,7 +3,7 @@ import seaborn as sns
 
 from matplotlib import pyplot as plt
 
-from metrics import Metrics, MetricsCollated
+from metrics import MetricsCollated
 
 
 def plot_betas(betas: np.ndarray, lmbdas: np.ndarray):
@@ -13,9 +13,9 @@ def plot_betas(betas: np.ndarray, lmbdas: np.ndarray):
 
     sns.set_style("whitegrid")
     fig, ax = plt.subplots(figsize=(8, 6))
-
     for d in range(D):
         sns.lineplot(x=lmbdas, y=betas[:, d], label=f"Beta {d+1}", ax=ax)
+        sns.scatterplot(x=lmbdas, y=betas[:, d], ax=ax, s=20)
 
     ax.set_xscale("log")
     ax.set_xlabel("Lambda (log scale)")
