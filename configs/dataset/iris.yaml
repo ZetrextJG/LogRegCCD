@@ -1,5 +1,6 @@
 _target_: dataset.IrisDataset
 _partial_: true
 
+name: iris
 num_classes: 2
 

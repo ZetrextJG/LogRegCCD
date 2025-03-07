@@ -7,6 +7,7 @@ from scipy.stats import bernoulli, multivariate_normal
 import numpy as np
 import pandas as pd
 
+
 def generate_synthetic_dataset(p, n, d, g):
     """
     Generation of synthetic dataset.
@@ -38,14 +39,17 @@ def generate_synthetic_dataset(p, n, d, g):
 
 
 class SyntheticDataset(BaseDataset):
-    def __init__(self,
-                 num_classes: int,
-                 p: float,
-                 n: int,
-                 d: int,
-                 g: float,
-                 split: str = "train") -> None:
-        super().__init__(num_classes, split)
+    def __init__(
+        self,
+        name: str,
+        num_classes: int,
+        p: float,
+        n: int,
+        d: int,
+        g: float,
+        split: str = "train",
+    ) -> None:
+        super().__init__(name, num_classes, split)
 
         X_gen, y_gen = generate_synthetic_dataset(p, n, d, g)
         indicies = np.arange(X_gen.shape[0])
@@ -69,3 +73,4 @@ class SyntheticDataset(BaseDataset):
     def get_data(self) -> np.ndarray:
         X, y = self.data[self.split]
         return np.hstack((X, y.reshape(-1, 1)))
+

@@ -6,8 +6,8 @@ from dataset.base import BaseDataset
 
 
 class IrisDataset(BaseDataset):
-    def __init__(self, num_classes: int, split: str = "train") -> None:
-        super().__init__(num_classes, split)
+    def __init__(self, name: str, num_classes: int, split: str = "train") -> None:
+        super().__init__(name, num_classes, split)
 
         iris = datasets.load_iris()
         X_full, y_full = iris["data"], iris["target"]  # type: ignore

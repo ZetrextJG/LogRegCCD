@@ -8,13 +8,14 @@ from pathlib import Path
 class CSVDataset(BaseDataset):
     def __init__(
         self,
+        name: str,
         num_classes: int,
         train_path: str,
         test_path: str,
         val_path: str,
         split: str = "train",
     ) -> None:
-        super().__init__(num_classes, split)
+        super().__init__(name, num_classes, split)
 
         self.train_path = Path(train_path)
         assert self.train_path.exists(), f"{self.train_path} does not exist"

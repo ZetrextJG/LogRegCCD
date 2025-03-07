@@ -5,10 +5,12 @@ import numpy as np
 class BaseDataset(ABC):
     def __init__(
         self,
+        name: str,
         num_classes: int,
         split: str = "train",
     ) -> None:
         super().__init__()
+        self.name = name
         self.num_classes = num_classes
         assert split in ["train", "val", "test"]
         self.split = split
