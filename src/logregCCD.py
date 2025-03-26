@@ -148,7 +148,7 @@ class LogRegCCD:
         lmbda_max = 4 * np.max(np.abs(x.T @ y)) / (N * self.alpha)
         lmbda_min = self.min_lmbda_eps * lmbda_max
         lmbdas = np.logspace(np.log10(lmbda_max), np.log10(lmbda_min), self.num_lmbdas)
-        lmbdas = [0 for i in range(self.num_lmbdas)]
+
         # Fit the model for each lambda
         results: list[Result] = []
         for lmbda in tqdm(lmbdas):

@@ -24,53 +24,59 @@ def main(config: DictConfig):
     test_dataset: BaseDataset = dataset(split="test")
     val_dataset: BaseDataset = dataset(split="val")
 
-    # alpha = [0.001, 0.01, 0.05, 0.1,0.3,0.5,0.7, 1.0]
-    alpha = [1]
-    for a in alpha:
-        ccd_model = LogRegCCD(
-            alpha=a,  # lasso
-            heuristic_intercept=False,
-            fit_intercept=False,
-        )
-        # tutaj  _fit
-        results = ccd_model.fit(
-            train_dataset.get_X(),
-            train_dataset.get_y(),
-            val_dataset.get_X(),
-            val_dataset.get_y(),
-        )
-        print(results)
-        # scores = [result["metrics"] for result in results]
-        # betas = [result["betas"] for result in results]
-        # betas = np.stack(betas)
-        # print(scores)
-        # print([score['roc_auc'] for score in scores])
-        # print(betas)
-        print(ccd_model.lmbda)
-        print(ccd_model.beta0)
-        print(ccd_model.betas)
-
-    filename = f"CCD_alpha{a}.txt"
-        # with open(filename, "w") as f:
-        #     pass
-        # with open(filename, "w") as f:
-        #     print(str(results))
-        #     f.write(str(results))
-
-    # lmbda = ccd_model.lmbda
-
-    lr_model = LogisticRegression(
-        penalty=None
+    X_train, y_train = train_dataset.get_X(), train_dataset.get_y()
+    X_test, y_test = test_dataset.get_X(), test_dataset.get_y()
+    ccd_model = LogRegCCD(
+        alpha=1,  # does not matter
+        warm_start=False,
+        heuristic_intercept=False,
+        fit_intercept=False,
     )
-    lr_model.fit(train_dataset.get_X(), train_dataset.get_y())
-    y_pred = lr_model.predict(test_dataset.get_X())
-    print(calculate_metrics(test_dataset.get_y(), y_pred))
-    print(lr_model.intercept_)
-    print(lr_model.coef_)
 
-    # num = [k for k in range(betas.shape[0])]
-    # metr = plot_betas(betas, num)
-    # plt.show()
+    print("Fitting model without L1 regularization: ")
+
+    # Fit model without and with L1 regularization
+    print("CCD model: ")
+    beta0, betas = ccd_model._fit(X_train, y_train, lmbda=0)
+    y_pred = ccd_model._predict_proba(X_test, beta0=beta0, betas=betas)
+    y_pred = (y_pred > 0.5).astype(int)
+    print(calculate_metrics(y_test, y_pred))
+    # print(beta0)
+    # print(betas)
+
+    print("Logistic Regression model: ")
+    lr_model = LogisticRegression(penalty=None, fit_intercept=False, solver="saga")
+    lr_model.fit(X_train, y_train)
+    y_pred = lr_model.predict(X_test)
+    print(calculate_metrics(y_test, y_pred))
+    # print(lr_model.intercept_)
+    # print(lr_model.coef_[0])
+
+    print(f"Norm difference betas: {np.linalg.norm(betas - lr_model.coef_[0])}")
+
+    print("Fitting model with L1 regularization L=1: ")
+
+    # Fit model without and with L1 regularization
+    print("CCD model: ")
+    beta0, betas = ccd_model._fit(X_train, y_train, lmbda=1)
+    y_pred = ccd_model._predict_proba(X_test, beta0=beta0, betas=betas)
+    y_pred = (y_pred > 0.5).astype(int)
+    print(calculate_metrics(y_test, y_pred))
+    # print(beta0)
+    # print(betas)
+
+    print("Logistic Regression model: ")
+    lr_model = LogisticRegression(
+        penalty="l1", C=1, fit_intercept=False, solver="liblinear"
+    )
+    lr_model.fit(X_train, y_train)
+    y_pred = lr_model.predict(X_test)
+    print(calculate_metrics(y_test, y_pred))
+    # print(lr_model.intercept_)
+    # print(lr_model.coef_[0])
+
+    print(f"Norm difference betas: {np.linalg.norm(betas - lr_model.coef_[0])}")
+
 
 if __name__ == "__main__":
     main()
