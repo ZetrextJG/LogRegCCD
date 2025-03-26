@@ -50,6 +50,7 @@ def plot_metrics(metrics: MetricsCollated, lmbdas: np.ndarray, metric_name: str)
     sns.lineplot(x=lmbdas, y=metrics[metric_name], marker="o", ax=ax)
 
     ax.set_xscale("log")  # Log scale for lambda
+    ax.set_ylim(0, 1)  # Set y-axis limits
     ax.set_xlabel("Lambda")
     ax.set_ylabel(metric_name.capitalize())
     ax.set_title(f"{metric_name.capitalize()} vs Lambda")
