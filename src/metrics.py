@@ -30,10 +30,12 @@ def calculate_metrics(
 ) -> Metrics:
     y_pred = (y_score > threshold).astype(int)
     metrics = {
-        "accuracy": skm.accuracy_score(y_true, y_pred),  # type: ignore
+        "accuracy": skm.accuracy_score(y_true, y_pred),
+        "balanced_acc": skm.balanced_accuracy_score(y_true, y_pred), # type: ignore
         "precision": skm.precision_score(
             y_true, y_pred, average="binary", zero_division=0.0
         ),  # type: ignore
+
         "recall": skm.recall_score(y_true, y_pred, average="binary", zero_division=0.0),  # type: ignore
         "f1": skm.f1_score(y_true, y_pred, average="binary"),  # type: ignore
         "roc_auc": skm.roc_auc_score(y_true, y_score),  # type: ignore

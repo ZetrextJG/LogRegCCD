@@ -7,5 +7,6 @@ exp:
 
   center: True
   standardize: True
-
   output_path: results/general
+
+
