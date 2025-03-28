@@ -1,5 +1,6 @@
 import numpy as np
 from tqdm import tqdm
+from typing import Literal
 
 from metrics import calculate_metrics, Metrics
 from typing import TypedDict
@@ -24,6 +25,9 @@ class Result(TypedDict):
     metrics: Metrics
 
 
+BetaUpdate = Literal["in-loop", "out-loop"]
+
+
 class LogRegCCD:
     beta0: float
     betas: np.ndarray
@@ -32,6 +36,7 @@ class LogRegCCD:
     def __init__(
         self,
         alpha: float,
+        beta_update: BetaUpdate = "out-loop",
         num_lmbdas: int = 100,
         min_lmbda_eps: float = 1e-4,
         max_cycles: int = 100,
@@ -42,6 +47,7 @@ class LogRegCCD:
         update_eps: float = 1e-4,
     ) -> None:
         self.alpha = alpha
+        self.beta_update = beta_update
         self.num_lmbdas = num_lmbdas
         self.min_lmbda_eps = min_lmbda_eps
         self.max_cycles = max_cycles
@@ -206,9 +212,16 @@ class LogRegCCD:
         lmbdas = np.logspace(np.log10(lmbda_max), np.log10(lmbda_min), self.num_lmbdas)
 
         # Fit the model for each lambda
+        if self.beta_update == "in-loop":
+            fitting_function = self._fit2
+        elif self.beta_update == "out-loop":
+            fitting_function = self._fit
+        else:
+            raise ValueError("Invalid beta update method")
+
         results: list[Result] = []
         for lmbda in tqdm(lmbdas):
-            beta0, betas = self._fit(x, y, lmbda)
+            beta0, betas = fitting_function(x, y, lmbda)
             probs = self._predict_proba(val_X, beta0, betas)
             metrics = calculate_metrics(val_y, probs)
             results.append(
