@@ -13,7 +13,7 @@ from metrics import calculate_metrics
 from utils import seed_everything, collate_dicts
 from logregCCD import LogRegCCD
 from pathlib import Path
-
+import matplotlib.pyplot as plt
 import logging
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ def main(config: DictConfig):
 
     # Init the model
     ccd_model = LogRegCCD(
-        alpha=1,  # lasso
+        alpha=0.0000001,  # lasso
         heuristic_intercept=False,
         fit_intercept=False,
     )
@@ -61,7 +61,7 @@ def main(config: DictConfig):
     lmbdas = np.array([result["lmbda"] for result in results])
     betas = np.stack([result["betas"] for result in results])
     fit_metrics = collate_dicts([result["metrics"] for result in results])
-
+    print(fit_metrics)
     # Evaluate the model
     logger.info("Evaluating model")
     train_metrics = calculate_metrics(
@@ -94,20 +94,22 @@ def main(config: DictConfig):
     )
 
     # Save results
-    output_dir = Path(config.exp.output_path) / config.dataset.name
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # output_dir = Path(config.exp.output_path) / config.dataset.name
+    # output_dir.mkdir(parents=True, exist_ok=True)
 
     # Plotting
     logger.info("Plotting results")
     ## Plot betas
-    fig = plot_betas(betas, lmbdas)
-    fig.savefig(output_dir / "betas.pdf")
+    # fig = plot_betas(betas, lmbdas)
+    fig = plot_metrics(val_metrics, lmbdas, "val_accuracy")
+    plt.show()
+    # fig.savefig(output_dir / "betas.pdf")
     ## Plot metrics
-    for metric in fit_metrics.keys():
-        fig = plot_metrics(fit_metrics, lmbdas, metric)
-        fig.savefig(output_dir / f"{metric}.pdf")
-
-    logger.info("Saving results done")
+    # for metric in fit_metrics.keys():
+    #     fig = plot_metrics(fit_metrics, lmbdas, metric)
+    #     fig.savefig(output_dir / f"{metric}.pdf")
+    #
+    # logger.info("Saving results done")
 
 
 if __name__ == "__main__":
