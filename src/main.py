@@ -101,7 +101,7 @@ def main(config: DictConfig):
     logger.info("Plotting results")
     ## Plot betas
     # fig = plot_betas(betas, lmbdas)
-    fig = plot_metrics(val_metrics, lmbdas, 'val_accuracy')
+    fig = plot_metrics(val_metrics, lmbdas, "val_accuracy")
     plt.show()
     # fig.savefig(output_dir / "betas.pdf")
     ## Plot metrics

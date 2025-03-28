@@ -1,0 +1,12 @@
+defaults:
+  - _self_
+  - dataset: iris
+
+exp:
+  seed: 42
+
+  center: True
+  standardize: True
+  penalize: False
+  output_path: results/test_logreg
+

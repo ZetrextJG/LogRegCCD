@@ -39,6 +39,7 @@ class LogRegCCD:
         px_clipping_eps: float = 1e-5,
         heuristic_intercept: bool = False,
         fit_intercept: bool = False,
+        update_eps: float = 1e-4,
     ) -> None:
         self.alpha = alpha
         self.num_lmbdas = num_lmbdas
@@ -48,6 +49,7 @@ class LogRegCCD:
         self.px_clipping_eps = px_clipping_eps
         self.heuristic_intercept = heuristic_intercept
         self.fit_intercept = fit_intercept
+        self.update_eps = update_eps
 
         self.fitted = False
         self.beta0 = None  # type: ignore
@@ -112,10 +114,64 @@ class LogRegCCD:
                 )
                 ## Update beta_j using Equation 10
                 numerator = soft_thresholding(s_input, lmbda * self.alpha)
-                demoniator = weighted_vars[j] + lmbda * (1 - self.alpha)
+                demoniator = (
+                    weighted_vars[j] + lmbda * (1 - self.alpha) + self.update_eps
+                )
                 betas[j] = numerator / demoniator
 
-            if np.linalg.norm(betas - old_betas, ord=1) < 1e-4:
+            if np.linalg.norm(betas - old_betas, ord=1) < 1e-5:
+                break
+
+        return beta0, betas
+
+    def _fit2(self, x: np.ndarray, y: np.ndarray, lmbda: float):
+        # Precomputed for efficiency
+        x2 = x**2
+
+        # Initialize the betas
+        if self.warm_start and (self.beta0 is not None) and (self.betas is not None):
+            betas = self.betas.copy()
+            beta0 = self.beta0
+        else:
+            betas = np.zeros(x.shape[1])
+            beta0 = 0
+            if self.heuristic_intercept:
+                beta0 = -np.log((1 / np.mean(y) - 1))  # type: ignore
+
+        # CCD loop
+        for _ in range(self.max_cycles):
+            for j in range(x.shape[1]):
+                old_betas = betas.copy()
+
+                # Estimate using the current betas
+                z_pred = beta0 + (x @ betas)  # linear predictor
+                px_pred = sigmoid(z_pred)  # probability of the positive class
+                ## Prediction clipping
+                px_pred = np.clip(
+                    px_pred, a_min=self.px_clipping_eps, a_max=1 - self.px_clipping_eps
+                )
+                weights = px_pred * (1 - px_pred)  # weights (Equation 17)
+                z = z_pred + (y - px_pred) / weights  # working response (Equation 16)
+
+                # Run the coordinate descent
+                weighted_vars = weights @ x2
+
+                z_pred = beta0 + (x @ betas)
+                z_residuals = z - z_pred
+
+                # Compute the update for beta_j
+                ## Using Equation 8 adapted for weighted non standardized case
+                s_input = np.sum(
+                    weights * (x[:, j] * z_residuals + x2[:, j] * betas[j])
+                )
+                ## Update beta_j using Equation 10
+                numerator = soft_thresholding(s_input, lmbda * self.alpha)
+                demoniator = (
+                    weighted_vars[j] + lmbda * (1 - self.alpha) + self.update_eps
+                )
+                betas[j] = numerator / demoniator
+
+            if np.linalg.norm(betas - old_betas, ord=1) < 1e-5:
                 break
 
         return beta0, betas
