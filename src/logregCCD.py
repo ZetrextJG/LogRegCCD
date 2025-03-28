@@ -207,7 +207,7 @@ class LogRegCCD:
 
         # Compute the lambda sequence (Section 2.5)
         # The scaling by 4 is due to max of weights being 1/4
-        lmbda_max = 4 * np.max(np.abs(x.T @ y)) / (N * self.alpha)
+        lmbda_max = np.max(np.abs(x.T @ (y - 0.5))) / (self.alpha + 1e-4)
         lmbda_min = self.min_lmbda_eps * lmbda_max
         lmbdas = np.logspace(np.log10(lmbda_max), np.log10(lmbda_min), self.num_lmbdas)
 

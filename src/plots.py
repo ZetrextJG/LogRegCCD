@@ -21,7 +21,8 @@ def plot_betas(betas: np.ndarray, lmbdas: np.ndarray):
     ax.set_xlabel("Lambda (log scale)")
     ax.set_ylabel("Beta Coefficients")
     ax.set_title("Regularization Path")
-    ax.legend()
+    if ax.legend_ is not None:
+        ax.legend_.remove()
 
     return fig
 
