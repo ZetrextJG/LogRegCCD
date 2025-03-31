@@ -1,0 +1,9 @@
+defaults:
+  - _self_
+  - dataset: iris
+
+exp:
+  seed: 42
+
+  output_path: results/exp_parameters_impact
+

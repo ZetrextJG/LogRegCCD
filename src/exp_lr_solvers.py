@@ -1,17 +1,13 @@
 import hydra
 
-from plots import plot_betas, plot_metrics
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from omegaconf import DictConfig
 from hydra.utils import instantiate
 import numpy as np
-import time
 
 from dataset import BaseDataset
-from metrics import calculate_metrics
-from utils import seed_everything, collate_dicts
-from logregCCD import LogRegCCD
+from utils import seed_everything
 from pathlib import Path
 import matplotlib.pyplot as plt
 import logging
@@ -23,7 +19,7 @@ import matplotlib.pyplot as plt
 logger = logging.getLogger(__name__)
 
 
-@hydra.main(version_base=None, config_path="../configs", config_name="test_lr")
+@hydra.main(version_base=None, config_path="../configs", config_name="exp_lr_solvers")
 def main(config: DictConfig):
     # Allow reproducibility
     logger.info("Setting seed")
@@ -33,11 +29,7 @@ def main(config: DictConfig):
     logger.info("Creating datasets")
     dataset = instantiate(config.dataset)
     train_dataset: BaseDataset = dataset(split="train")
-    test_dataset: BaseDataset = dataset(split="test")
-    val_dataset: BaseDataset = dataset(split="val")
     X_train, y_train = train_dataset.get_X(), train_dataset.get_y()
-    X_val, y_val = val_dataset.get_X(), val_dataset.get_y()
-    X_test, y_test = test_dataset.get_X(), test_dataset.get_y()
 
     # Preprocess data
     logger.info("Preprocessing data")
@@ -45,8 +37,6 @@ def main(config: DictConfig):
         with_mean=config.exp.center, with_std=config.exp.standardize
     )
     X_train: np.ndarray = scaler.fit_transform(X_train)  # type: ignore
-    X_val: np.ndarray = scaler.transform(X_val)  # type: ignore
-    X_test: np.ndarray = scaler.transform(X_test)  # type: ignore
 
     solvers = ["saga", "newton-cg", "lbfgs"]
     if config.exp.penalize:

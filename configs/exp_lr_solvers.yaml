@@ -8,5 +8,5 @@ exp:
   center: True
   standardize: True
   penalize: False
-  output_path: results/test_logreg
+  output_path: results/exp_lr_solvers
 

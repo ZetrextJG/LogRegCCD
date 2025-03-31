@@ -14,11 +14,12 @@ from sklearn.linear_model import LogisticRegression
 from matplotlib import pyplot as plt
 import logging
 from tqdm import tqdm
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 
-def experiment(parameter_name):
+def experiment(parameter_name, output_dir):
     """
     Experiments for certain parameter:
     p - probability of positive class
@@ -128,7 +129,7 @@ def experiment(parameter_name):
 
     plt.ylim(0, 1)
     plt.legend()
-    plt.savefig(f"{parameter_name}_lr.png")
+    plt.savefig(output_dir / f"{parameter_name}_lr.png")
     plt.clf()
 
     plt.plot(scope, balanced_accuracy_ccd, label="Balanced accuracy")
@@ -153,11 +154,13 @@ def experiment(parameter_name):
 
     plt.ylim(0, 1)
     plt.legend()
-    plt.savefig(f"{parameter_name}_ccd.png")
+    plt.savefig(output_dir / f"{parameter_name}_ccd.png")
     plt.clf()
 
 
-@hydra.main(version_base=None, config_path="../configs", config_name="config")
+@hydra.main(
+    version_base=None, config_path="../configs", config_name="exp_parameters_impact"
+)
 def main(config: DictConfig):
     """
     Experiments
@@ -166,19 +169,21 @@ def main(config: DictConfig):
     logger.info("Setting seed")
     seed_everything(config.exp.seed)
 
+    output_path = Path(config.exp.output_path)
+    output_path.mkdir(parents=True, exist_ok=True)
+
     # Probability
-    experiment("p")
+    experiment("p", output_path)
 
     # Number of observations
-    experiment("n")
+    experiment("n", output_path)
 
     # Number of features
-    experiment("d")
+    experiment("d", output_path)
 
     # Correlation
-    experiment("g")
+    experiment("g", output_path)
 
 
 if __name__ == "__main__":
     main()
-
