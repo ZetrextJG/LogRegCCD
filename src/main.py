@@ -7,7 +7,7 @@ from omegaconf import DictConfig
 from hydra.utils import instantiate
 import numpy as np
 import time
-
+import matplotlib.pyplot as plt
 from dataset import BaseDataset
 from metrics import calculate_metrics
 from utils import seed_everything, collate_dicts
@@ -167,6 +167,8 @@ def main(config: DictConfig):
     print(lr_model.coef_[0])
 
     print(f"Norm difference betas: {np.linalg.norm(betas - lr_model.coef_[0])}")
-
+    plot_betas_fig = plot_betas(betas, lambdas)
+    plt.show()
+    
 if __name__ == "__main__":
     main()
