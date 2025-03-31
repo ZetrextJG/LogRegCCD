@@ -1,19 +1,14 @@
 import hydra
-from scipy.stats import alpha
 
 from sklearn.linear_model import LogisticRegression
 from omegaconf import DictConfig
 from hydra.utils import instantiate
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from plots import plot_metrics, plot_betas
 from dataset import BaseDataset
 from metrics import calculate_metrics
 from utils import seed_everything
 from logregCCD import LogRegCCD
-from matplotlib import pyplot as plt
-import os
-from metrics import MetricsCollated
 import logging
 
 logger = logging.getLogger(__name__)
