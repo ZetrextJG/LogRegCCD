@@ -1,0 +1,18 @@
+    roc_auc    pr_auc        f1  balanced_acc  fitting_time_s                  model
+0  0.557692  0.322917  0.500000      0.682692       40.929541          CCD (alpha=0)
+1  0.615385  0.317956  0.615385      0.807692      142.567307          CCD (alpha=1)
+2  0.730769  0.493590  0.461538      0.644231        0.289912  LogReg (penalty=None)
+3  0.634615  0.510417  0.500000      0.682692        0.302972    LogReg (penalty=l1)
+4  0.711538  0.488095  0.545455      0.721154        0.180787    LogReg (penalty=l2)
+Fitting model without L1 regularization: 
+CCD model: 
+{'accuracy': 0.6111111111111112, 'balanced_acc': 0.5875, 'precision': 0.6153846153846154, 'recall': 0.8, 'f1': 0.6956521739130435, 'roc_auc': 0.5875, 'pr_auc': 0.6034188034188034}
+Logistic Regression model: 
+{'accuracy': 0.6111111111111112, 'balanced_acc': 0.5875, 'precision': 0.6153846153846154, 'recall': 0.8, 'f1': 0.6956521739130435, 'roc_auc': 0.5875, 'pr_auc': 0.6034188034188034}
+Norm difference betas: 28.97807877628869
+Fitting model with L1 regularization L=1: 
+CCD model: 
+{'accuracy': 0.6666666666666666, 'balanced_acc': 0.6375, 'precision': 0.6428571428571429, 'recall': 0.9, 'f1': 0.75, 'roc_auc': 0.6375, 'pr_auc': 0.6341269841269842}
+Logistic Regression model: 
+{'accuracy': 0.6111111111111112, 'balanced_acc': 0.5875, 'precision': 0.6153846153846154, 'recall': 0.8, 'f1': 0.6956521739130435, 'roc_auc': 0.5875, 'pr_auc': 0.6034188034188034}
+Norm difference betas: 0.5489504298011917

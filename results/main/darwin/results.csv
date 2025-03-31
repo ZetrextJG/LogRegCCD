@@ -1,0 +1,2 @@
+train_accuracy,train_balanced_acc,train_precision,train_recall,train_f1,train_roc_auc,train_pr_auc,val_accuracy,val_balanced_acc,val_precision,val_recall,val_f1,val_roc_auc,val_pr_auc,test_accuracy,test_balanced_acc,test_precision,test_recall,test_f1,test_roc_auc,test_pr_auc,fitting_time_s,lambda
+1.0,1.0,1.0,1.0,1.0,1.0,1.0000000000000002,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,90.581432378,11.306784430968646
