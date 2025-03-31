@@ -18,23 +18,24 @@ def generate_synthetic_dataset(p, n, d, g):
     :return: Matrix X of size n x d containing explanatory features of a dataset and vector y of size n x 1 conatining
     value of explained feature.
     """
-    X, y = None, None
-    """X and y will be generated row-wisely."""
-    for i in range(n):
-        """Generation of value of explained variable."""
-        y_temp = bernoulli.rvs(p)
-        """Generation of mean vector for multivariate normal distribution."""
-        mean = np.array([y_temp / (i + 1) for i in range(d)])
-        """Generation of covariance matrix for multivariate normal distribution."""
-        covar = np.ones([d, d])
-        for row_idx in range(d):
-            for col_idx in range(d):
-                covar[row_idx][col_idx] *= g ** abs(row_idx - col_idx)
-        """Generation of X sample from multivariate normal distribution."""
-        X_temp = multivariate_normal.rvs(mean, covar)
-        """Addition of generated data to final X and y"""
-        X = np.array([X_temp]) if X is None else np.append(X, [X_temp], axis=0)
-        y = np.array([y_temp]) if y is None else np.append(y, [y_temp], axis=0)
+
+    # Generate y vector in one step
+    y = bernoulli.rvs(p, size=n)
+
+    # Define mean vectors
+    mean0 = np.zeros(d)
+    mean1 = np.array([1 / (i + 1) for i in range(d)])
+
+    # Define covariance matrix
+    rows = np.arange(d)
+    cols = np.arange(d).reshape(-1, 1)
+    cov = g ** (np.abs(rows - cols))
+
+    # Generate X matrix in two steps
+    X = multivariate_normal.rvs(mean=mean0, cov=cov, size=n)
+    num = np.sum(y)
+    X[y == 1] = multivariate_normal.rvs(mean=mean1, cov=cov, size=num)
+
     return X, y
 
 
@@ -51,15 +52,14 @@ class SyntheticDataset(BaseDataset):
     ) -> None:
         super().__init__(name, num_classes, split)
 
-        X_gen, y_gen = generate_synthetic_dataset(p, n, d, g)
-        indicies = np.arange(X_gen.shape[0])
-        np.random.shuffle(indicies)
-        train_idx, val_idx, test_idx = split_vector(indicies, [0.8, 0.1, 0.1])
+        X_train, y_train = generate_synthetic_dataset(p, n, d, g)
+        X_val, y_val = generate_synthetic_dataset(p, 10 * d, d, g)
+        X_test, y_test = generate_synthetic_dataset(p, 10 * d, d, g)
 
         self.data = {
-            "train": (X_gen[train_idx], y_gen[train_idx]),
-            "val": (X_gen[val_idx], y_gen[val_idx]),
-            "test": (X_gen[test_idx], y_gen[test_idx]),
+            "train": (X_train, y_train),
+            "val": (X_val, y_val),
+            "test": (X_test, y_test),
         }
 
     def get_X(self) -> np.ndarray:
@@ -73,4 +73,3 @@ class SyntheticDataset(BaseDataset):
     def get_data(self) -> np.ndarray:
         X, y = self.data[self.split]
         return np.hstack((X, y.reshape(-1, 1)))
-
