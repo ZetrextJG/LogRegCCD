@@ -43,8 +43,10 @@ def experiment(parameter_name):
     else:
         raise ValueError("Wrong parameter name")
 
-    balanced_accuracy = []
-    roc_auc = []
+    balanced_accuracy_lr = []
+    roc_auc_lr = []
+    balanced_accuracy_ccd = []
+    roc_auc_ccd = []
 
     for parameter in tqdm(scope):
         # fmt: off
@@ -82,46 +84,76 @@ def experiment(parameter_name):
         X_train, y_train = train_dataset.get_X(), train_dataset.get_y()
         X_test, y_test = test_dataset.get_X(), test_dataset.get_y()
         #
-        # model = LogRegCCD(
-        #     alpha=1,  # does not matter
-        #     warm_start=False,
-        #     heuristic_intercept=False,
-        #     fit_intercept=False,
-        #     max_cycles=1000,
-        # )
-        # beta0, betas = model._fit(X_train, y_train, lmbda=0)
-        # y_pred = model._predict_proba(X_test, beta0, betas)
+        model = LogRegCCD(
+            alpha=1,  # does not matter
+            warm_start=False,
+            heuristic_intercept=False,
+            fit_intercept=False,
+            max_cycles=1000,
+        )
+        beta0, betas = model._fit(X_train, y_train, lmbda=0)
+        y_pred = model._predict_proba(X_test, beta0, betas)
+        test_metrics = calculate_metrics(y_test, y_pred, prefix="test")
+        balanced_accuracy_ccd.append(test_metrics["test_balanced_acc"])
+        roc_auc_ccd.append(test_metrics["test_roc_auc"])
+
         model = LogisticRegression(
             penalty=None, fit_intercept=False, solver="saga", max_iter=10000
         )
         model.fit(X_train, y_train)
         y_pred = model.predict_proba(X_test)[:, 1]
-
         test_metrics = calculate_metrics(y_test, y_pred, prefix="test")
-        balanced_accuracy.append(test_metrics["test_balanced_acc"])
-        roc_auc.append(test_metrics["test_roc_auc"])
+        balanced_accuracy_lr.append(test_metrics["test_balanced_acc"])
+        roc_auc_lr.append(test_metrics["test_roc_auc"])
 
-    plt.plot(scope, balanced_accuracy, label="Balanced accuracy")
-    plt.plot(scope, roc_auc, label="ROC AUC")
+    plt.plot(scope, balanced_accuracy_lr, label="Balanced accuracy")
+    plt.plot(scope, roc_auc_lr, label="ROC AUC")
     plt.hlines(0.5, min(scope), max(scope), linestyles="dashed", label="Random")
     plt.ylabel("Metric")
 
+    title = "Standard Logistic Regression"
+
     if parameter_name == "p":
         plt.xlabel("Probability of positive class")
-        plt.title("Metrics vs Probability of positive class")
+        plt.title(f"Metrics vs Probability of positive class - {title}")
     elif parameter_name == "n":
         plt.xlabel("Number of observations")
-        plt.title("Metrics vs Number of observations")
+        plt.title(f"Metrics vs Number of observations - {title}")
     elif parameter_name == "d":
         plt.xlabel("Number of features")
-        plt.title("Metrics vs Number of features")
+        plt.title(f"Metrics vs Number of features - {title}")
     elif parameter_name == "g":
         plt.xlabel("Correlation between features")
-        plt.title("Metrics vs Correlation between features")
+        plt.title(f"Metrics vs Correlation between features - {title}")
 
     plt.ylim(0, 1)
     plt.legend()
-    plt.savefig(f"{parameter_name}.png")
+    plt.savefig(f"{parameter_name}_lr.png")
+    plt.clf()
+
+    plt.plot(scope, balanced_accuracy_ccd, label="Balanced accuracy")
+    plt.plot(scope, roc_auc_ccd, label="ROC AUC")
+    plt.hlines(0.5, min(scope), max(scope), linestyles="dashed", label="Random")
+    plt.ylabel("Metric")
+
+    title = "CCD Logistic Regression"
+
+    if parameter_name == "p":
+        plt.xlabel("Probability of positive class")
+        plt.title(f"Metrics vs Probability of positive class - {title}")
+    elif parameter_name == "n":
+        plt.xlabel("Number of observations")
+        plt.title(f"Metrics vs Number of observations - {title}")
+    elif parameter_name == "d":
+        plt.xlabel("Number of features")
+        plt.title(f"Metrics vs Number of features - {title}")
+    elif parameter_name == "g":
+        plt.xlabel("Correlation between features")
+        plt.title(f"Metrics vs Correlation between features - {title}")
+
+    plt.ylim(0, 1)
+    plt.legend()
+    plt.savefig(f"{parameter_name}_ccd.png")
     plt.clf()
 
 
