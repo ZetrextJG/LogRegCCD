@@ -14,6 +14,8 @@ python src/main.py dataset=toxicity
 python src/exp_parameters_impact.py
 
 ## Run plots for logistic regression solvers
+python src/exp_lr_solvers.py exp.penalize=False dataset=bankrupcy
+python src/exp_lr_solvers.py exp.penalize=True dataset=bankrupcy
 python src/exp_lr_solvers.py exp.penalize=False dataset=credit_g
 python src/exp_lr_solvers.py exp.penalize=True dataset=credit_g
 

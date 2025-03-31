@@ -1,0 +1,12 @@
+defaults:
+  - _self_
+  - dataset: iris
+
+exp:
+  seed: 42
+
+  center: True
+  standardize: True
+  output_path: results/exp_lr_vs_ccd
+
+
