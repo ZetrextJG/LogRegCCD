@@ -1,18 +1,19 @@
-import hydra
-
-from plots import plot_betas, plot_metrics
-from sklearn.preprocessing import StandardScaler
-from omegaconf import DictConfig
-from hydra.utils import instantiate
-import numpy as np
-import time
-from dataset import BaseDataset
-import pandas as pd
-from metrics import calculate_metrics
-from utils import seed_everything, collate_dicts
-from logregCCD import LogRegCCD
-from pathlib import Path
 import logging
+import time
+from pathlib import Path
+
+import hydra
+import numpy as np
+import pandas as pd
+from hydra.utils import instantiate
+from omegaconf import DictConfig
+from sklearn.preprocessing import StandardScaler
+
+from dataset import BaseDataset
+from logregCCD import LogRegCCD
+from metrics import calculate_metrics
+from plots import plot_betas, plot_metrics
+from utils import collate_dicts, seed_everything
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +75,7 @@ def main(config: DictConfig):
         **val_metrics,
         **test_metrics,
         "fitting_time_s": fitting_time_s,
+        "lambda": ccd_model.lmbda,
     }
 
     # Save results

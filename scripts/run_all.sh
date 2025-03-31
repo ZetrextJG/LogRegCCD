@@ -18,3 +18,8 @@ python src/exp_lr_solvers.py exp.penalize=False dataset=credit_g
 python src/exp_lr_solvers.py exp.penalize=True dataset=credit_g
 
 ## Run experiments comparing logistic regression and CCD
+python src/exp_lr_vs_ccd.py dataset=bankrupcy
+python src/exp_lr_vs_ccd.py dataset=credit_g
+python src/exp_lr_vs_ccd.py dataset=darwin
+python src/exp_lr_vs_ccd.py dataset=iris
+python src/exp_lr_vs_ccd.py dataset=toxicity

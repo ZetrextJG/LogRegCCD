@@ -86,7 +86,10 @@ def main(config: DictConfig):
     ax.set_ylabel("Beta Value")
     ax.legend(title="Solver")
 
-    save_path = Path(config.exp.output_path) / f"beta_values_{text}.png"
+    output_dir = Path(config.exp.output_path) / config.dataset.name
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    save_path = output_dir / f"beta_values_{text}.png"
     fig.savefig(save_path)
 
 
