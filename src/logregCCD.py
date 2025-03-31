@@ -46,6 +46,46 @@ class LogRegCCD:
         fit_intercept: bool = False,
         update_eps: float = 1e-4,
     ) -> None:
+        """
+        Model class for the Logistic Regression
+        optimized using Cyclic Coordinate Descent (CCD).
+
+        Args:
+            alpha (float): Elastic net mixing parameter.
+            On the extremes we have 0 for Ridge and 1 for Lasso.
+
+            beta_update (BetaUpdate): Method to update the betas.
+            If set to "in-loop" the betas are updated inside the CCD loop.
+            That means after each beta update the predictions are recalculated.
+            If set to "out-loop" the betas are updated after the CCD loop.
+            That means after all the betas are updated the predictions are recalculated.
+
+            num_lmbdas (int): Number of lambda values to search through
+            during the cross-validation process.
+
+            min_lmbda_eps (float): Epsilon to scale the maximum lambda value
+            in order to obtain the minimum lambda value.
+
+            max_cycles (int): Maximum number of CCD cycles per lambda value.
+
+            warm_start (bool): Whether to warm start the betas.
+            Warm starting means using the previous lambda's betas as the initial
+            betas for the current lambda.
+
+            px_clipping_eps (float): Epsilon to clip the predicted probabilities
+            in order to prevent coefficients from diverging to infinity.
+
+            heuristic_intercept (bool): Whether to use a heuristic for the intercept.
+            The heuristic is based on the log odds of the mean of the positive class.
+            Make the initial predictions for betas=0 to be the mean of the positive class.
+
+            fit_intercept (bool): Whether to fit the intercept.
+            Fitting of the intercept is done by taking the mean of the working response.
+            Intercept is fitted after each working response update.
+
+            update_eps (float): Epsilon for the update denominator.
+            Prevents division by zero in the update step.
+        """
         self.alpha = alpha
         self.beta_update = beta_update
         self.num_lmbdas = num_lmbdas
@@ -63,16 +103,22 @@ class LogRegCCD:
         self.lmbda = None  # type: ignore
 
     def predict_proba(self, x: np.ndarray) -> np.ndarray:
+        """
+        Predicts the probabilities of the positive class
+        using the current estimates of the coefficients.
+        (Equation 11 using y as the I(G=1))
+
+        Args:
+            x (np.ndarray): Input features of shape (n, p)
+
+        Returns:
+            np.ndarray: 1-D Array of predicted probabilities of the positive class
+        """
         return self._predict_proba(x, self.beta0, self.betas)
 
     def _predict_proba(
         self, x: np.ndarray, beta0: float, betas: np.ndarray
     ) -> np.ndarray:
-        """
-        Predicts the probabilities of the positive class
-        using the current estimated of the coefficients.
-        (Equation 11 using y as the I(G=1))
-        """
         z_pred = beta0 + (x @ betas)
         return sigmoid(z_pred)
 
@@ -190,7 +236,19 @@ class LogRegCCD:
         val_y: np.ndarray,
         metric: str = "accuracy",
     ):
-        """X is of shape (n, p) and y is of shape (n,)"""
+        """
+        Fit the model using CCD with cross-validation
+        selection of the regularization parameter lambda.
+
+        Args:
+            train_X (np.ndarray): Training features of shape (n, p)
+            train_y (np.ndarray): Training labels of shape (n,)
+            val_X (np.ndarray): Validation features of shape (m, p)
+            val_y (np.ndarray): Validation labels of shape (m,)
+            metric (str): Metric to use for the cross-validation selection.
+            Options are "accuracy", "precision", "recall", "f1", "roc_auc".
+        """
+
         assert (
             train_X.shape[0] == train_y.shape[0]
         ), "X and y should have the same number of samples"
@@ -203,7 +261,6 @@ class LogRegCCD:
         # Parameter reassignment to follow the notation in the paper
         x = train_X
         y = train_y
-        N = x.shape[0]
 
         # Compute the lambda sequence (Section 2.5)
         # The scaling by 4 is due to max of weights being 1/4
@@ -247,7 +304,19 @@ class LogRegCCD:
         return results
 
     def predict(self, X: np.ndarray, threshold: float = 0.5) -> np.ndarray:
-        """Predicts on the input X"""
+        """
+        Predicts the class using the current estimates of the coefficients.
+        The function uses the predict_proba method and applies a threshold.
+
+        Args:
+            X (np.ndarray): Input features of shape (n, p)
+
+            threshold (float): Threshold to classify the positive class.
+            Default is 0.5.
+
+        Returns:
+            np.ndarray: 1-D Array of predicted classes. Vector of 0s and 1s.
+        """
         proba = self.predict_proba(X)
         return (proba > threshold).astype(int)
 
@@ -258,6 +327,18 @@ class LogRegCCD:
         val_X: np.ndarray,
         val_y: np.ndarray,
     ) -> np.ndarray:
-        """Fits the model on the train set and predicts on the test set"""
+        """
+        Fit the model and predicts the class on the training data.
+        With the best lambda found during the cross-validation.
+
+        Args:
+            train_X (np.ndarray): Training features of shape (n, p)
+            train_y (np.ndarray): Training labels of shape (n,)
+            val_X (np.ndarray): Validation features of shape (m, p)
+            val_y (np.ndarray): Validation labels of shape (m,)
+
+        Returns:
+            np.ndarray: Predicted classes on the training data. (n,)
+        """
         self.fit(train_X, train_y, val_X, val_y)
         return self.predict(train_X)
